@@ -7,6 +7,9 @@ name = "pypi"
 transformers = "*"
 torch = "*"
 requests = "*"
+beautifulsoup4 = "*"
+tqdm = "*"
+sentence-transformers = "*"
 
 [dev-packages]
 

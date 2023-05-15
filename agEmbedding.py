@@ -4,7 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 import re
-min_sentence_length = 50
+min_sentence_length = 200
 response = requests.get("https://www.govinfo.gov/content/pkg/PLAW-115publ334/html/PLAW-115publ334.htm")
 data = response.text
 soup = BeautifulSoup(data, 'html.parser')
@@ -12,14 +12,19 @@ data = soup.get_text()
 
 
 # Split the text into sentences using regular expressions
-data = re.split('(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s', data)
+#data = re.split('(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s', data)
+
+data = re.split(r'\n\s*\n', data)
 
 # Remove sentences that are shorter than the specified minimum length
 data = [re.sub('\s+', ' ', s.strip().replace('\n', '')) for s in data if len(s) >= min_sentence_length]
-
+for paragraph in data:
+	print(paragraph)
+	print()
+	print()
 embedder = SentenceTransformer('multi-qa-mpnet-base-dot-v1')
 
-def encode_sentences(transcripts, batch_size=64):
+def encode_sentences(transcripts, batch_size=256):
 
     # loop through in batches of 64
     all_batches = []
@@ -55,8 +60,8 @@ corpus_embeddings = encode_sentences(data)
 queries = ['What are programs that can help organic farmers?']
 
 
-# Find the closest 5 sentences of the corpus for each query sentence based on cosine similarity
-top_k = min(5, len(corpus))
+# Find the closest 15 sentences of the corpus for each query sentence based on cosine similarity
+top_k = min(15, len(corpus))
 for query in queries:
     query_embedding = embedder.encode(query, convert_to_tensor=True)
 
@@ -74,10 +79,9 @@ for query in queries:
 
     print("\n\n======================\n\n")
     print("Query:", query)
-    print("\nTop 5 most similar sentences in corpus:")
+    print("\nTop 15 most similar sentences in corpus:")
 
     for score, idx in zip(top_results[0], top_results[1]):
-        print(corpus[idx], "(Score: {:.4f})".format(score))
-
+        print(data[idx], "(Score: {:.4f})".format(score))
 
 
